@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  web:
+  homebills:
     image: 20ervin/homebills:latest
-    container_name: homebills_app
+    container_name: homebills
     ports:
       - "5020:5020"
     volumes:
