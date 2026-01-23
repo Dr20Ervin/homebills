@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card-custom p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold">All Records</h5>
+        
+        <select class="form-select w-auto" onchange="filterYear(this.value)">
+            <option value="All Time" {% if selected_year == 'All Time' %}selected{% endif %}>All Time</option>
+            <option value="2026" {% if selected_year == '2026' %}selected{% endif %}>2026</option>
+            <option value="2025" {% if selected_year == '2025' %}selected{% endif %}>2025</option>
+            <option value="2024" {% if selected_year == '2024' %}selected{% endif %}>2024</option>
+        </select>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Category</th>
+                    <th>Cost</th>
+                    <th>Usage</th>
+                    {% if user.role != 'Viewer' %}
+                    <th>Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for bill in bills %}
+                
+                {% set bg_color = bill.category.color if bill.category else '#ccc' %}
+                {% set icon_class = bill.category.icon if bill.category else 'mdi-delete' %}
+                {% set cat_name = bill.category.name if bill.category else 'Deleted' %}
+                {% set unit_label = bill.category.unit if bill.category else '' %}
+
+                <tr>
+                    <td class="fw-bold">{{ bill.date.strftime('%Y-%m') }}</td>
+                    <td>
+                        <span class="badge text-white" style="background-color: {{ bg_color }};">
+                            <i class="mdi {{ icon_class }}"></i> {{ cat_name }}
+                        </span>
+                    </td>
+                    <td>${{ bill.cost }}</td>
+                    <td>{{ bill.usage or '-' }} {{ unit_label }}</td>
+                    
+                    {% if user.role != 'Viewer' %}
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRecord{{ bill.id }}">
+                            <i class="mdi mdi-pencil"></i>
+                        </button>
+                        <a href="/record/delete/{{ bill.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete record?')">
+                            <i class="mdi mdi-delete"></i>
+                        </a>
+
+                        <div class="modal fade" id="editRecord{{ bill.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content" style="background-color: var(--bg-card); color: var(--text-main);">
+                                    <form method="POST" action="/record/edit/{{ bill.id }}">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Edit Record</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-2">
+                                                <label>Date</label>
+                                                <input type="date" name="date" class="form-control" value="{{ bill.date.strftime('%Y-%m-%d') }}" required>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label>Category</label>
+                                                <select name="category" class="form-select">
+                                                    {% for cat in categories %}
+                                                    <option value="{{ cat.id }}" {% if bill.category_id == cat.id %}selected{% endif %}>
+                                                        {{ cat.name }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6 mb-2">
+                                                    <label>Cost</label>
+                                                    <input type="number" step="0.01" name="amount" class="form-control" value="{{ bill.cost }}" required>
+                                                </div>
+                                                <div class="col-6 mb-2">
+                                                    <label>Usage</label>
+                                                    <input type="number" step="0.01" name="usage" class="form-control" value="{{ bill.usage }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">No records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function filterYear(year) {
+        if(year === 'All Time') {
+            window.location.href = '/records';
+        } else {
+            window.location.href = '/records?year=' + year;
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  web:
+    image: 20ervin/homebills:latest
+    container_name: homebills_app
+    ports:
+      - "5020:5020"
+    volumes:
+      - ./config_data:/config
+    depends_on:
+      - db
+    environment:
+      - SECRET_KEY=change-me-to-something-secure
+      - DATABASE=psql
+      - PSQL_USER=hb_user
+      - PSQL_PASSWORD=secure_password
+      - PSQL_HOST=db
+      - PSQL_DB=homebills_db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: homebills_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: hb_user
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_DB: homebills_db
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

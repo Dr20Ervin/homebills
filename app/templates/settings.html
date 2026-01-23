@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card-custom p-4 h-100">
+            <h5 class="fw-bold mb-4">General Settings</h5>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label text-muted small fw-bold">CURRENCY SYMBOL</label>
+                    <div class="input-group">
+                        <input type="text" name="currency" class="form-control" value="{{ currency }}">
+                        <button class="btn btn-outline-primary" type="submit">Update</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card-custom p-4 h-100">
+            <div class="d-flex justify-content-between mb-3">
+                <h5 class="fw-bold">Users</h5>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">Add User</button>
+            </div>
+            <table class="table table-sm align-middle">
+                <thead><tr><th>User</th><th>Role</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>
+                            {% if u.role == 'Admin' %} <span class="badge bg-danger">Admin</span>
+                            {% elif u.role == 'RecordEditor' %} <span class="badge bg-primary">Editor</span>
+                            {% else %} <span class="badge bg-secondary">Viewer</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-link text-primary text-decoration-none fw-bold" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#editUserModal{{ u.id }}">
+                                Edit
+                            </button>
+                            
+                            <button class="btn btn-sm btn-link text-danger text-decoration-none" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#passModal{{ u.id }}">
+                                Change Pass
+                            </button>
+
+                            <div class="modal fade" id="editUserModal{{ u.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content" style="background-color: var(--bg-card); color: var(--text-main);">
+                                        <form method="POST" action="/user/edit/{{ u.id }}">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Edit User: {{ u.username }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Username</label>
+                                                    <input type="text" name="username" class="form-control" value="{{ u.username }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Role</label>
+                                                    <select name="role" class="form-select">
+                                                        <option value="Viewer" {% if u.role == 'Viewer' %}selected{% endif %}>Viewer</option>
+                                                        <option value="RecordEditor" {% if u.role == 'RecordEditor' %}selected{% endif %}>RecordEditor</option>
+                                                        <option value="Admin" {% if u.role == 'Admin' %}selected{% endif %}>Admin</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="passModal{{ u.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content" style="background-color: var(--bg-card); color: var(--text-main);">
+                                        <form method="POST" action="/user/password/{{ u.id }}">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Change Password for {{ u.username }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <input type="password" name="new_password" class="form-control" placeholder="New Password" required>
+                                            </div>
+                                            <div class="modal-footer"><button type="submit" class="btn btn-danger">Save</button></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card-custom p-4">
+    <div class="d-flex justify-content-between mb-3">
+        <h5 class="fw-bold">Expense Categories</h5>
+        <button class="btn btn-fancy" data-bs-toggle="modal" data-bs-target="#addCatModal">
+            <i class="mdi mdi-plus"></i> Add Category
+        </button>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-custom align-middle">
+            <thead>
+                <tr>
+                    <th>Color</th>
+                    <th>Icon</th>
+                    <th>Name</th>
+                    <th>Unit</th>
+                    <th>Price / Unit</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td>
+                        {% set dot_style = "display:inline-block; width:20px; height:20px; border-radius:50%; border: 1px solid #ccc; background-color: " ~ cat.color ~ ";" %}
+                        <span style="{{ dot_style }}"></span>
+                    </td>
+                    <td><i class="mdi {{ cat.icon }} fs-5"></i></td>
+                    <td class="fw-bold">{{ cat.name }}</td>
+                    <td>{{ cat.unit or '-' }}</td>
+                    <td>{{ currency }}{{ cat.default_cost }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCatModal{{ cat.id }}">Edit</button>
+                        <a href="/category/delete/{{ cat.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete?')">Delete</a>
+
+                        <div class="modal fade" id="editCatModal{{ cat.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content" style="background-color: var(--bg-card); color: var(--text-main);">
+                                    <form method="POST" action="/category/edit/{{ cat.id }}">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Edit Category</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row">
+                                                <div class="col-6 mb-3">
+                                                    <label class="form-label">Name</label>
+                                                    <input type="text" name="name" class="form-control" value="{{ cat.name }}" required>
+                                                </div>
+                                                <div class="col-6 mb-3">
+                                                    <label class="form-label">Unit</label>
+                                                    <input type="text" name="unit" class="form-control" value="{{ cat.unit }}">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Icon</label>
+                                                <input type="text" name="icon" class="form-control" value="{{ cat.icon }}">
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6 mb-3">
+                                                    <label class="form-label">Color</label>
+                                                    <input type="color" name="color" class="form-control form-control-color" value="{{ cat.color }}">
+                                                </div>
+                                                <div class="col-6 mb-3">
+                                                    <label class="form-label">Price Per Unit</label>
+                                                    <input type="number" step="0.01" name="default_cost" class="form-control" value="{{ cat.default_cost }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer"><button type="submit" class="btn btn-primary">Save Changes</button></div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background-color: var(--bg-card); color: var(--text-main);">
+            <form method="POST" action="/user/add">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select name="role" class="form-select">
+                            <option value="Viewer">Viewer (Read Only)</option>
+                            <option value="RecordEditor">RecordEditor (Add/Edit Bills)</option>
+                            <option value="Admin">Admin (Full Access)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Create User</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addCatModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background-color: var(--bg-card); color: var(--text-main);">
+            <form method="POST" action="/category/add">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Internet" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Unit</label>
+                            <input type="text" name="unit" class="form-control" placeholder="e.g. GB">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Icon (MDI Name)</label>
+                        <input type="text" name="icon" class="form-control" placeholder="mdi-wifi" value="mdi-circle">
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Chart Color</label>
+                            <input type="color" name="color" class="form-control form-control-color" value="#4e73df">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Price Per Unit</label>
+                            <input type="number" step="0.01" name="default_cost" class="form-control" value="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-success">Save Category</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

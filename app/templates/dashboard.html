@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">Overview</h4>
+        <small class="text-muted">Welcome back, {{ user.username }}</small>
+    </div>
+    
+    {% if user.role != 'Viewer' %}
+    <button class="btn-fancy" data-bs-toggle="modal" data-bs-target="#addModal">
+        <i class="mdi mdi-plus"></i> Add New Entry
+    </button>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card-custom p-4 h-100">
+            <h6 class="fw-bold text-uppercase text-muted mb-3">Expense History</h6>
+            <div style="height: 300px;"><canvas id="mainChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card-custom p-4 h-100">
+            <h6 class="fw-bold text-uppercase text-muted mb-3">Last Month Distribution</h6>
+            <div style="height: 220px; position: relative;">
+                <canvas id="pieChart"></canvas>
+            </div>
+            <div class="mt-4 pt-3 border-top">
+                {% if pie_breakdown %}
+                    {% for item in pie_breakdown %}
+                    <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 0.9rem;">
+                        <div>
+                            <span style="display:inline-block; width:10px; height:10px; background-color: {{ item.color }}; border-radius:50%; margin-right:5px;"></span>
+                            <strong>{{ item.name }}</strong>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold">{{ currency }}{{ item.cost }}</span>
+                            {% if item.unit_val > 0 %}
+                            <small class="text-muted ms-1">({{ item.unit_val }} {{ item.unit_label }})</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-muted small">No data recorded for last month.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-custom p-4 mt-4">
+    <div class="table-responsive">
+        <table class="table table-custom table-hover">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    {% for cat in categories %}
+                    <th><i class="mdi {{ cat.icon }}"></i> {{ cat.name }}</th>
+                    {% endfor %}
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="fw-bold">{{ row.date_obj.strftime('%b %Y') }}</td>
+                    {% for cat in categories %}
+                    <td>{{ currency }}{{ row.get(cat.name + '_cost', '-') }}</td>
+                    {% endfor %}
+                    <td class="fw-bold text-success">{{ currency }}{{ row.total }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Add New Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/add">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="fw-bold small text-muted">DATE</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold small text-muted">CATEGORY</label>
+                        <select name="category" id="modalCategory" class="form-select" onchange="updateModal()">
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" data-price="{{ cat.default_cost }}" data-unit="{{ cat.unit }}">
+                                {{ cat.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="fw-bold small text-muted" id="usageLabel">USAGE (Units)</label>
+                            <input type="number" step="0.01" name="usage" id="modalUsage" class="form-control" placeholder="0" oninput="updateModal()">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="fw-bold small text-muted">COST (Total)</label>
+                            <input type="number" step="0.01" name="amount" id="modalCost" class="form-control" required oninput="autoCalculateReverse()">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="submit" class="btn btn-fancy w-100">Save Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- THEME DETECTION FOR CHARTS ---
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Set Colors based on Theme
+    const textColor = isDark ? '#e0e0e0' : '#666';
+    const gridColor = isDark ? '#333' : '#e3e6f0';
+
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+
+    // BAR CHART
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: JSON.parse('{{ chart_labels | safe }}'),
+            datasets: JSON.parse('{{ chart_datasets | safe }}')
+        },
+        options: { 
+            maintainAspectRatio: false, 
+            scales: { x: { stacked: true }, y: { stacked: true } } 
+        }
+    });
+
+    // PIE CHART
+    const ctxPie = document.getElementById('pieChart').getContext('2d');
+    new Chart(ctxPie, {
+        type: 'pie',
+        data: {
+            labels: JSON.parse('{{ pie_labels | safe }}'),
+            datasets: [{
+                data: JSON.parse('{{ pie_data | safe }}'),
+                backgroundColor: JSON.parse('{{ pie_colors | safe }}'),
+                borderWidth: 1,
+                borderColor: isDark ? '#1e1e1e' : '#fff' // Dark border for pie slices in dark mode
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // Modal Logic
+    function updateModal() {
+        const catSelect = document.getElementById('modalCategory');
+        const usageInput = document.getElementById('modalUsage');
+        const costInput = document.getElementById('modalCost');
+        const usageLabel = document.getElementById('usageLabel');
+        const selectedOption = catSelect.options[catSelect.selectedIndex];
+        
+        const unit = selectedOption.getAttribute('data-unit');
+        usageLabel.innerText = unit && unit !== 'None' ? `USAGE (${unit})` : 'USAGE (Units)';
+
+        const pricePerUnit = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+        const usage = parseFloat(usageInput.value) || 0;
+        if (usage > 0) costInput.value = (usage * pricePerUnit).toFixed(2);
+    }
+
+    function autoCalculateReverse() {
+        const catSelect = document.getElementById('modalCategory');
+        const usageInput = document.getElementById('modalUsage');
+        const costInput = document.getElementById('modalCost');
+        const selectedOption = catSelect.options[catSelect.selectedIndex];
+        const pricePerUnit = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+        const cost = parseFloat(costInput.value) || 0;
+        if (pricePerUnit > 0 && cost > 0) usageInput.value = (cost / pricePerUnit).toFixed(2);
+    }
+    document.addEventListener('DOMContentLoaded', updateModal);
+</script>
+{% endblock %}
