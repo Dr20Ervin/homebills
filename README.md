@@ -3,6 +3,7 @@
 > **A modern, self-hosted home expense tracker featuring interactive dashboards, multi-user roles, and dark mode.**
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/20ervin/homebills)](https://hub.docker.com/r/20ervin/homebills)
+[![GitHub Repo](https://img.shields.io/badge/github-Dr20Ervin%2Fhomebills-black?logo=github)](https://github.com/Dr20Ervin/homebills)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-docker-blue)](https://www.docker.com/)
 
