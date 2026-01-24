@@ -41,7 +41,7 @@
                             <i class="mdi {{ icon_class }}"></i> {{ cat_name }}
                         </span>
                     </td>
-                    <td>${{ bill.cost }}</td>
+                    <td>{{ currency }}{{ bill.cost }}</td>
                     <td>{{ bill.usage or '-' }} {{ unit_label }}</td>
                     
                     {% if user.role != 'Viewer' %}

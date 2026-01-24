@@ -169,7 +169,8 @@ def records():
     
     bills = query.order_by(BillEntry.date.desc()).all()
     categories = Category.query.filter_by(is_active=True).all()
-    return render_template('view_records.html', user=current_user, bills=bills, categories=categories, selected_year=year_filter)
+    currency = get_currency()  # Add this line
+    return render_template('view_records.html', user=current_user, bills=bills, categories=categories, selected_year=year_filter, currency=currency)  # Add currency here
 
 # --- SETTINGS ---
 @main.route('/settings', methods=['GET', 'POST'])
