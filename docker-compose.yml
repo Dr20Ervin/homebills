@@ -1,6 +1,5 @@
 services:
   homebills:
-    build: .
     image: 20ervin/homebills:latest
     container_name: homebills
     ports:
