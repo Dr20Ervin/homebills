@@ -1,7 +1,8 @@
 services:
   homebills:
-    image: 20ervin/homebills:v1.1
-    container_name: homebills-test
+    build: .
+    image: 20ervin/homebills:latest
+    container_name: homebills
     ports:
       - "5020:5020"
     volumes:

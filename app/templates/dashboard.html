@@ -14,20 +14,25 @@
     {% endif %}
 </div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card-custom p-4 h-100">
+<div class="row align-items-stretch">
+    <div class="col-lg-8 mb-4 d-flex">
+        <div class="card-custom p-4 w-100 d-flex flex-column">
             <h6 class="fw-bold text-uppercase text-muted mb-3">Expense History</h6>
-            <div style="height: 300px;"><canvas id="mainChart"></canvas></div>
+            <div class="flex-grow-1" style="min-height: 300px; position: relative;">
+                <canvas id="mainChart"></canvas>
+            </div>
         </div>
     </div>
-    <div class="col-lg-4">
-        <div class="card-custom p-4 h-100">
+
+    <div class="col-lg-4 mb-4 d-flex">
+        <div class="card-custom p-4 w-100 d-flex flex-column">
             <h6 class="fw-bold text-uppercase text-muted mb-3">Last Month Distribution</h6>
-            <div style="height: 220px; position: relative;">
+            
+            <div class="d-flex align-items-center justify-content-center flex-grow-1" style="min-height: 220px; position: relative;">
                 <canvas id="pieChart"></canvas>
             </div>
-            <div class="mt-4 pt-3 border-top">
+
+            <div class="mt-auto pt-3 border-top w-100">
                 {% if pie_breakdown %}
                     {% for item in pie_breakdown %}
                     <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 0.9rem;">
@@ -44,14 +49,14 @@
                     </div>
                     {% endfor %}
                 {% else %}
-                    <p class="text-center text-muted small">No data recorded for last month.</p>
+                    <p class="text-center text-muted small mt-2">No data recorded for last month.</p>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<div class="card-custom p-4 mt-4">
+<div class="card-custom p-4">
     <div class="table-responsive">
         <table class="table table-custom table-hover">
             <thead>
@@ -123,10 +128,8 @@
 
 {% block scripts %}
 <script>
-    // --- THEME DETECTION FOR CHARTS ---
+    // --- THEME DETECTION ---
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    
-    // Set Colors based on Theme
     const textColor = isDark ? '#e0e0e0' : '#666';
     const gridColor = isDark ? '#333' : '#e3e6f0';
 
@@ -143,6 +146,7 @@
         },
         options: { 
             maintainAspectRatio: false, 
+            responsive: true,
             scales: { x: { stacked: true }, y: { stacked: true } } 
         }
     });
@@ -157,11 +161,12 @@
                 data: JSON.parse('{{ pie_data | safe }}'),
                 backgroundColor: JSON.parse('{{ pie_colors | safe }}'),
                 borderWidth: 1,
-                borderColor: isDark ? '#1e1e1e' : '#fff' // Dark border for pie slices in dark mode
+                borderColor: isDark ? '#1e1e1e' : '#fff'
             }]
         },
         options: {
             maintainAspectRatio: false,
+            responsive: true,
             plugins: { legend: { display: false } }
         }
     });

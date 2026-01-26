@@ -8,30 +8,20 @@ from .models import db, User, Category, BillEntry, AppSetting
 
 main = Blueprint('main', __name__)
 
-# --- GATEKEEPER: FORCE SETUP IF NO ADMIN ---
+# --- GATEKEEPER ---
 @main.before_request
 def check_setup():
-    if request.endpoint and 'static' in request.endpoint:
-        return
-
-    if request.endpoint == 'main.setup':
-        return
-
-    admin_exists = User.query.filter_by(role='Admin').first()
-    
-    if not admin_exists:
+    if request.endpoint and 'static' in request.endpoint: return
+    if request.endpoint == 'main.setup': return
+    if not User.query.filter_by(role='Admin').first():
         return redirect(url_for('main.setup'))
 
 @main.route('/setup', methods=['GET', 'POST'])
 def setup():
-
-    if User.query.filter_by(role='Admin').first():
-        return redirect(url_for('main.login'))
-
+    if User.query.filter_by(role='Admin').first(): return redirect(url_for('main.login'))
     if request.method == 'POST':
         username = request.form.get('admin_user')
         password = request.form.get('admin_pass')
-        
         if not username or not password:
             flash("Admin username and password are required.")
             return redirect(url_for('main.setup'))
@@ -47,19 +37,14 @@ def setup():
         cat_colors = request.form.getlist('cat_color[]')
 
         for i in range(len(cat_names)):
-            if cat_names[i].strip(): # Only add if name exists
-                new_cat = Category(
-                    name=cat_names[i],
-                    unit=cat_units[i],
+            if cat_names[i].strip():
+                db.session.add(Category(
+                    name=cat_names[i], unit=cat_units[i],
                     default_cost=float(cat_costs[i] or 0),
-                    icon=cat_icons[i],
-                    color=cat_colors[i]
-                )
-                db.session.add(new_cat)
+                    icon=cat_icons[i], color=cat_colors[i]
+                ))
 
-        # 3. Default Settings
         db.session.add(AppSetting(key='currency', value='$'))
-        
         db.session.commit()
         flash("Setup Complete!")
         return redirect(url_for('main.login'))
@@ -84,9 +69,14 @@ def get_pivoted_data():
         grouped[month_key][f"{cat_name}_cost"] = bill.cost
         grouped[month_key][f"{cat_name}_unit"] = bill.usage
         grouped[month_key]['total'] += bill.cost
+    
+    # ✅ FIX: Round the totals to remove decimals like .810000004
+    for data in grouped.values():
+        data['total'] = round(data['total'], 2)
+
     return sorted(grouped.values(), key=lambda x: x['date_obj'], reverse=True)
 
-# --- AUTH (SECURE) ---
+# --- ROUTES ---
 @main.route('/', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated: return redirect(url_for('main.dashboard'))
@@ -96,7 +86,6 @@ def login():
             login_user(user)
             return redirect(url_for('main.dashboard'))
         flash('Invalid Login')
-    
     system_theme = os.environ.get('DEFAULT_THEME', 'light')
     return render_template('login.html', theme=system_theme)
 
@@ -113,7 +102,6 @@ def toggle_theme():
     db.session.commit()
     return jsonify({'status': 'success', 'new_theme': current_user.theme})
 
-# --- DASHBOARD ---
 @main.route('/dashboard')
 @login_required
 def dashboard():
@@ -133,7 +121,6 @@ def dashboard():
     pie_data = []
     pie_colors = []
     pie_breakdown = []
-    
     if pivoted_data:
         latest_month = pivoted_data[0]
         for cat in categories:
@@ -143,26 +130,16 @@ def dashboard():
                 pie_data.append(cost)
                 pie_colors.append(cat.color or '#ccc')
                 pie_breakdown.append({
-                    'name': cat.name,
-                    'cost': cost,
-                    'color': cat.color or '#ccc',
-                    'unit_val': latest_month.get(f"{cat.name}_unit", 0),
-                    'unit_label': cat.unit
+                    'name': cat.name, 'cost': cost, 'color': cat.color or '#ccc',
+                    'unit_val': latest_month.get(f"{cat.name}_unit", 0), 'unit_label': cat.unit
                 })
 
-    return render_template('dashboard.html', 
-                         user=current_user,
-                         categories=categories,
-                         rows=pivoted_data[:6],
-                         currency=currency,
-                         chart_labels=json.dumps(chart_labels),
-                         chart_datasets=json.dumps(datasets),
-                         pie_labels=json.dumps(pie_labels),
-                         pie_data=json.dumps(pie_data),
-                         pie_colors=json.dumps(pie_colors),
-                         pie_breakdown=pie_breakdown)
+    return render_template('dashboard.html', user=current_user, categories=categories,
+                         rows=pivoted_data[:6], currency=currency,
+                         chart_labels=json.dumps(chart_labels), chart_datasets=json.dumps(datasets),
+                         pie_labels=json.dumps(pie_labels), pie_data=json.dumps(pie_data),
+                         pie_colors=json.dumps(pie_colors), pie_breakdown=pie_breakdown)
 
-# --- RECORDS ---
 @main.route('/records')
 @login_required
 def records():
@@ -170,13 +147,11 @@ def records():
     query = BillEntry.query
     if year_filter and year_filter != 'All Time':
         query = query.filter(extract('year', BillEntry.date) == int(year_filter))
-    
     bills = query.order_by(BillEntry.date.desc()).all()
     categories = Category.query.filter_by(is_active=True).all()
     currency = get_currency()
     return render_template('view_records.html', user=current_user, bills=bills, categories=categories, selected_year=year_filter, currency=currency)
 
-# --- SETTINGS ---
 @main.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
@@ -190,7 +165,6 @@ def settings():
         db.session.commit()
     return render_template('settings.html', user=current_user, users=User.query.all(), categories=Category.query.all(), currency=get_currency())
 
-# --- CATEGORY ACTIONS ---
 @main.route('/category/add', methods=['POST'])
 @login_required
 def add_category():
