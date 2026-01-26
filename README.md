@@ -38,16 +38,14 @@
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (SQLite)
 
-The easiest way to run **HomeBills** is using Docker Compose.
+The easiest way to run **HomeBills** is using Docker Compose. This uses an embedded SQLite database, perfect for single-user or family use.
 
 ### 1. Create a `docker-compose.yml` file
-Copy the following content into a file named `docker-compose.yml`. You can configure your security key and settings directly in the `environment` section.
+Copy the following content into a file named `docker-compose.yml`.
 
 ```yaml
-version: '3.8'
-
 services:
   web:
     image: 20ervin/homebills:latest
@@ -59,6 +57,7 @@ services:
     environment:
       - SECRET_KEY=change-me-to-something-secure-and-random
       - DATABASE=SQLite
+      - DEFAULT_THEME=dark  # Optional: 'light' or 'dark'
     restart: unless-stopped
 
 ```
@@ -88,21 +87,21 @@ For a more robust setup, you can connect HomeBills to a PostgreSQL database by s
 ### Update `docker-compose.yml`
 
 ```yaml
-version: '3.8'
-
 services:
-  web:
+  homebills:
     image: 20ervin/homebills:latest
-    container_name: homebills_app
+    container_name: homebills
     ports:
       - "5020:5020"
     volumes:
       - ./config_data:/config
     depends_on:
-      - db
+          db:
+            condition: service_healthy
     environment:
       - SECRET_KEY=change-me-to-something-secure
       - DATABASE=psql
+      - DEFAULT_THEME=dark
       - PSQL_USER=hb_user
       - PSQL_PASSWORD=secure_password
       - PSQL_HOST=db
@@ -118,6 +117,11 @@ services:
       POSTGRES_USER: hb_user
       POSTGRES_PASSWORD: secure_password
       POSTGRES_DB: homebills_db
+    healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U hb_user -d homebills_db"]
+          interval: 5s
+          timeout: 5s
+          retries: 5
     restart: unless-stopped
 
 volumes:
