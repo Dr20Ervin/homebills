@@ -2,6 +2,7 @@ from . import db, login_manager
 from flask_login import UserMixin
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash 
+import os  # <--- Added import
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -10,9 +11,10 @@ def load_user(user_id):
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(256), nullable=False) # Long string for hash
+    password = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), default='Viewer')
-    theme = db.Column(db.String(10), default='light')
+    
+    theme = db.Column(db.String(10), default=lambda: os.environ.get('DEFAULT_THEME', 'light'))
 
     def set_password(self, plain_password):
         self.password = generate_password_hash(plain_password)

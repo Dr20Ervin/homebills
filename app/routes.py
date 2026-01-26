@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, login_required, logout_user, current_user
@@ -63,7 +64,8 @@ def setup():
         flash("Setup Complete!")
         return redirect(url_for('main.login'))
 
-    return render_template('setup.html')
+    system_theme = os.environ.get('DEFAULT_THEME', 'light')
+    return render_template('setup.html', theme=system_theme)
 
 # --- HELPERS ---
 def get_currency():
@@ -94,7 +96,9 @@ def login():
             login_user(user)
             return redirect(url_for('main.dashboard'))
         flash('Invalid Login')
-    return render_template('login.html')
+    
+    system_theme = os.environ.get('DEFAULT_THEME', 'light')
+    return render_template('login.html', theme=system_theme)
 
 @main.route('/logout')
 @login_required
@@ -169,8 +173,8 @@ def records():
     
     bills = query.order_by(BillEntry.date.desc()).all()
     categories = Category.query.filter_by(is_active=True).all()
-    currency = get_currency()  # Add this line
-    return render_template('view_records.html', user=current_user, bills=bills, categories=categories, selected_year=year_filter, currency=currency)  # Add currency here
+    currency = get_currency()
+    return render_template('view_records.html', user=current_user, bills=bills, categories=categories, selected_year=year_filter, currency=currency)
 
 # --- SETTINGS ---
 @main.route('/settings', methods=['GET', 'POST'])

@@ -1,16 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ theme }}">
 <head>
     <meta charset="UTF-8">
     <title>HomeBills Setup</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f8; padding: 40px 0; }
-        .setup-card { max-width: 800px; margin: auto; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; }
-        .setup-header { background: #4e73df; color: white; padding: 30px; text-align: center; }
+        /* --- THEME VARIABLES --- */
+        :root {
+            --bg-body: #f4f6f8;
+            --bg-card: #ffffff;
+            --bg-row: #f8f9fc;
+            --text-main: #333;
+            --text-muted: #6c757d;
+            --input-bg: #fff;
+            --input-border: #ced4da;
+            --border-color: #e3e6f0;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #121212;
+            --bg-card: #1e1e1e;
+            --bg-row: #2d2d2d;
+            --text-main: #e0e0e0;
+            --text-muted: #b0b0b0;
+            --input-bg: #2d2d2d;
+            --input-border: #444;
+            --border-color: #333;
+        }
+
+        body { 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            padding: 40px 0; 
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .setup-card { 
+            max-width: 800px; 
+            margin: auto; 
+            background: var(--bg-card); 
+            border-radius: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+            overflow: hidden; 
+            border: 1px solid var(--border-color);
+        }
+
+        .setup-header { 
+            background: #4e73df; 
+            color: white; 
+            padding: 30px; 
+            text-align: center; 
+        }
+
         .setup-body { padding: 30px; }
-        .cat-row { background: #f8f9fc; border: 1px solid #e3e6f0; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+
+        .cat-row { 
+            background: var(--bg-row); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            padding: 10px; 
+            margin-bottom: 10px; 
+        }
+
+        /* Form Controls */
+        .form-control {
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border-color: var(--input-border);
+        }
+        .form-control:focus {
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border-color: #4e73df;
+        }
+        
+        [data-theme="dark"] ::placeholder { color: #888; }
+        [data-theme="dark"] .form-control-color { border-color: #444; }
     </style>
 </head>
 <body>
@@ -35,7 +101,7 @@
                 </div>
             </div>
 
-            <hr class="my-4">
+            <hr class="my-4" style="border-color: var(--border-color);">
 
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold mb-0"><i class="mdi mdi-shape"></i> Expense Categories</h5>
@@ -49,8 +115,7 @@
                 </div>
             </div>
 
-            <div id="categoryContainer">
-                </div>
+            <div id="categoryContainer"></div>
 
             <div class="mt-4 text-end">
                 <button type="submit" class="btn btn-primary btn-lg px-5">Complete Setup <i class="mdi mdi-arrow-right"></i></button>
