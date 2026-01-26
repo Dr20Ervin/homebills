@@ -30,11 +30,11 @@
 
 | **Dashboard (Dark Mode)** | **Expense Records** |
 |:---:|:---:|
-| ![Dashboard](https://i.imgur.com/zmpL3Ft.png) <br> *Monitor your spending trends at a glance.* | ![Records](https://i.imgur.com/lnnDWkB.png) <br> *View and manage monthly bills.* |
+| ![Dashboard](https://github.com/Dr20Ervin/homebills/blob/main/screenshots/dashboard.png?raw=true) <br> *Monitor your spending trends at a glance.* | ![Records](https://github.com/Dr20Ervin/homebills/blob/main/screenshots/records.png?raw=true) <br> *View and manage monthly bills.* |
 
 | **Settings & Users** | **Setup Wizard** |
 |:---:|:---:|
-| ![Settings](https://i.imgur.com/bU2Nodf.png) <br> *Manage users, roles, and categories.* | ![Setup](https://i.imgur.com/h0q7mxz.png) <br> *Easy initial configuration.* |
+| ![Settings](https://github.com/Dr20Ervin/homebills/blob/main/screenshots/settings.png?raw=true) <br> *Manage users, roles, and categories.* | ![Setup](https://github.com/Dr20Ervin/homebills/blob/main/screenshots/setup.png?raw=true) <br> *Easy initial configuration.* |
 
 ---
 
