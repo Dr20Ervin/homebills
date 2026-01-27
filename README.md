@@ -93,8 +93,6 @@ services:
     container_name: homebills
     ports:
       - "5020:5020"
-    volumes:
-      - ./config_data:/config
     depends_on:
           db:
             condition: service_healthy
