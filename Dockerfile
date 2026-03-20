@@ -1,24 +1,25 @@
 FROM python:3.10-slim
 
+# Create a non-root user
+RUN adduser --disabled-password --gecos '' myappuser
+
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
 
-# 1. Update OS and install dependencies for PostgreSQL adapters
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# (Optional) If /config needs to be written to by your app, set ownership
+RUN mkdir -p /config && chown -R myappuser:myappuser /config
 
-# 2. Create the config directory
-RUN mkdir -p /config
-
-# 3. Install Python dependencies
+# Install Python dependencies first (takes advantage of Docker layer caching)
 COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copy the rest of the application files and assign ownership
+COPY --chown=myappuser:myappuser . .
+
+# Switch to the non-root user
+USER myappuser
 
 EXPOSE 5020
 

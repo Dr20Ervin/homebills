@@ -1,20 +1,21 @@
 services:
   homebills:
     image: 20ervin/homebills:latest
+    build: .
     container_name: homebills
     ports:
       - "5020:5020"
     depends_on:
-          db:
-            condition: service_healthy
+      db:
+        condition: service_healthy
     environment:
-      - SECRET_KEY=change-me-to-something-secure
+      - SECRET_KEY=${SECRET_KEY:-change-me-to-something-secure}
       - DATABASE=psql
       - DEFAULT_THEME=dark
-      - PSQL_USER=hb_user
-      - PSQL_PASSWORD=secure_password
+      - PSQL_USER=${POSTGRES_USER:-hb_user}
+      - PSQL_PASSWORD=${POSTGRES_PASSWORD:-secure_password}
       - PSQL_HOST=db
-      - PSQL_DB=homebills_db
+      - PSQL_DB=${POSTGRES_DB:-homebills_db}
     restart: unless-stopped
 
   db:
@@ -23,14 +24,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: hb_user
-      POSTGRES_PASSWORD: secure_password
-      POSTGRES_DB: homebills_db
+      - POSTGRES_USER=${POSTGRES_USER:-hb_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secure_password}
+      - POSTGRES_DB=${POSTGRES_DB:-homebills_db}
     healthcheck:
-          test: ["CMD-SHELL", "pg_isready -U hb_user -d homebills_db"]
-          interval: 5s
-          timeout: 5s
-          retries: 5
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hb_user} -d ${POSTGRES_DB:-homebills_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
 volumes:
